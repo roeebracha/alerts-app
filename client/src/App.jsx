@@ -64,11 +64,13 @@ function App() {
   // Get top 10 cities from red alert notifications (from Feb 28th onwards)
   const topCities = useMemo(() => {
     const cityCount = {};
-    const startDate = new Date('2025-02-28T00:00:00');
+    const startDate = new Date('2025-02-28T00:00:00Z');
 
     alerts
       .filter(a => {
-        const alertDate = new Date(a.timestamp);
+        // Add 'Z' to indicate UTC if not present
+        const ts = a.timestamp.includes('Z') ? a.timestamp : a.timestamp + 'Z';
+        const alertDate = new Date(ts);
         return alertDate >= startDate &&
                (a.source.includes('פיקוד העורף') || a.content.includes('צבע אדום'));
       })
@@ -76,14 +78,21 @@ function App() {
         // Extract city names from content
         let content = alert.content;
 
-        // Remove "צבע אדום" prefix and time if present
+        // Remove common prefixes
         content = content.replace(/צבע אדום\s*\([^)]*\)\s*:?\s*/g, '');
+        content = content.replace(/צבע אדום:\s*/g, '');
+        content = content.replace(/ירי רקטות וטילים:\s*/g, '');
+        content = content.replace(/ניתן לצאת.*?:\s*/g, '');
+        content = content.replace(/חדירת כלי טיס.*?:\s*/g, '');
 
         const cities = content.split(/[,،]/);
 
         cities.forEach(city => {
           const cleanCity = city.trim();
-          if (cleanCity.length > 2 && cleanCity.length < 30 && !cleanCity.includes('צבע אדום')) {
+          if (cleanCity.length > 2 && cleanCity.length < 30 &&
+              !cleanCity.includes('צבע אדום') &&
+              !cleanCity.includes('...') &&
+              !cleanCity.includes('ירי')) {
             cityCount[cleanCity] = (cityCount[cleanCity] || 0) + 1;
           }
         });
