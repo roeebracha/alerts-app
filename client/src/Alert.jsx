@@ -1,6 +1,8 @@
 function Alert({ alert, highlightAreas = [] }) {
   const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
+    // Add 'Z' to indicate UTC if not present
+    const utcTimestamp = timestamp.includes('Z') ? timestamp : timestamp + 'Z';
+    const date = new Date(utcTimestamp);
     return date.toLocaleString('he-IL', {
       day: '2-digit',
       month: '2-digit',
